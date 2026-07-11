@@ -251,7 +251,13 @@ const recordButton = document.querySelector("#recordButton");
 let recognition = null;
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-if (SpeechRecognition) {
+function startRecording() {
+  if (!SpeechRecognition) return;
+
+  if (recognition) {
+    try { recognition.stop(); } catch (err) { console.error(err); }
+  }
+
   recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.lang = "en-US";
@@ -282,8 +288,14 @@ if (SpeechRecognition) {
   };
 
   recognition.onend = () => stopRecording();
-} else {
-  if (recordButton) recordButton.style.display = "none";
+
+  try {
+    recognition.start();
+  } catch (err) {
+    console.error(err);
+    showError("Could not start microphone: " + err.message);
+    stopRecording();
+  }
 }
 
 function stopRecording() {
@@ -293,12 +305,15 @@ function stopRecording() {
   }
 }
 
-if (recordButton && recognition) {
+if (recordButton) {
   recordButton.addEventListener("click", () => {
     if (recordButton.classList.contains("recording")) {
-      recognition.stop();
+      if (recognition) {
+        try { recognition.stop(); } catch (err) { console.error(err); }
+      }
+      stopRecording();
     } else {
-      try { recognition.start(); } catch (err) { console.error(err); }
+      startRecording();
     }
   });
 }
