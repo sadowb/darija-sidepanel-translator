@@ -28,6 +28,7 @@ venv/
 # Local design and documentation
 *.pen
 *.md
+!README.md
 design/
 docs/
 *.pdf

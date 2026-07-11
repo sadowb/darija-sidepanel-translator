@@ -1,4 +1,4 @@
-package ma.aui.darija.api;
+package ma.aui.darija.interfaces.rest.v1.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

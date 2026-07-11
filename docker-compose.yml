@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - LLM_API_URL=${LLM_API_URL}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL}
+      - API_USERNAME=${API_USERNAME}
+      - API_PASSWORD=${API_PASSWORD}
+      - ALLOWED_ORIGINS=http://localhost:8000,chrome-extension://*
+
+  php-client:
+    build:
+      context: ./php-client
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    environment:
+      - API_URL=http://backend:8080
+      - API_USERNAME=${API_USERNAME}
+      - API_PASSWORD=${API_PASSWORD}
+    depends_on:
+      - backend

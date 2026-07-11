@@ -26,12 +26,7 @@ function clearError() {
 }
 
 async function getSettings() {
-  return chrome.storage.local.get({
-    apiUrl: "http://localhost:8080",
-    username: "",
-    password: "",
-    autoTranslate: true
-  });
+  return SettingsStore.get();
 }
 
 async function updateConnectionStatus() {
@@ -59,21 +54,8 @@ async function translate() {
   setBusy(true);
   resultSection.hidden = true;
   try {
-    const response = await fetch(`${settings.apiUrl.replace(/\/$/, "")}/api/translate`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${btoa(`${settings.username}:${settings.password}`)}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ text })
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload.error || (response.status === 401
-        ? "The username or password is incorrect."
-        : "Translation failed. Please try again."));
-    }
-    translationResult.textContent = payload.translation;
+    const client = new TranslatorApi.TranslatorApiClient(settings);
+    translationResult.textContent = await client.translate(text);
     resultSection.hidden = false;
   } catch (error) {
     showError(error.message === "Failed to fetch"
@@ -118,17 +100,94 @@ document.querySelector("#settingsButton").addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
 });
 
-window.addEventListener("unload", () => speechSynthesis.cancel());
+window.addEventListener("unload", () => {
+  speechSynthesis.cancel();
+  if (recognition) {
+    recognition.stop();
+  }
+});
+
+const recordButton = document.querySelector("#recordButton");
+let recognition = null;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    recordButton.textContent = "🛑 Listening…";
+    recordButton.classList.add("recording");
+    clearError();
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    sourceText.value = (sourceText.value + " " + transcript).trim();
+    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    translate().catch(console.error);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error", event.error);
+    showError(`Voice input error: ${event.error}`);
+    stopRecording();
+  };
+
+  recognition.onend = () => {
+    stopRecording();
+  };
+} else {
+  if (recordButton) {
+    recordButton.style.display = "none";
+  }
+}
+
+function stopRecording() {
+  if (recordButton) {
+    recordButton.textContent = "🎤 Voice";
+    recordButton.classList.remove("recording");
+  }
+}
+
+if (recordButton && recognition) {
+  recordButton.addEventListener("click", () => {
+    if (recordButton.classList.contains("recording")) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  });
+}
 
 async function initialize() {
   await updateConnectionStatus();
   const { pendingSelection } = await chrome.storage.session.get("pendingSelection");
-  if (!pendingSelection) return;
-  await chrome.storage.session.remove("pendingSelection");
-  sourceText.value = pendingSelection.slice(0, 5000);
-  characterCount.textContent = `${sourceText.value.length} / 5000`;
-  const { autoTranslate } = await getSettings();
-  if (autoTranslate) await translate();
+  if (pendingSelection) {
+    await chrome.storage.session.remove("pendingSelection");
+    sourceText.value = pendingSelection.slice(0, 5000);
+    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    const { autoTranslate } = await getSettings();
+    if (autoTranslate) await translate();
+  }
 }
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "session" && changes.pendingSelection?.newValue) {
+    const newValue = changes.pendingSelection.newValue;
+    chrome.storage.session.remove("pendingSelection").catch(console.error);
+    sourceText.value = newValue.slice(0, 5000);
+    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    getSettings().then(async ({ autoTranslate }) => {
+      if (autoTranslate) await translate();
+    }).catch(console.error);
+  }
+});
 
 initialize().catch(() => showError("Could not initialize the extension."));

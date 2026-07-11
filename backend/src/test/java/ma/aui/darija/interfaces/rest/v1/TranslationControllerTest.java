@@ -1,4 +1,4 @@
-package ma.aui.darija.api;
+package ma.aui.darija.interfaces.rest.v1;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import ma.aui.darija.infrastructure.GeminiClient;
-import ma.aui.darija.service.TranslationProviderException;
+import ma.aui.darija.application.port.out.TranslationProvider;
+import ma.aui.darija.domain.exception.TranslationUnavailableException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,15 +21,18 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest(properties = {
         "app.security.username=translator",
         "app.security.password=test-password",
+        "gemini.api-key=test-key",
         "gemini.model=test-model"
 })
 @AutoConfigureMockMvc
-class TranslatorResourceTest {
+class TranslationControllerTest {
+    private static final String TRANSLATIONS_URL = "/api/v1/translations";
+
     @Autowired
     MockMvc mockMvc;
 
     @MockitoBean
-    GeminiClient geminiClient;
+    TranslationProvider translationProvider;
 
     @Test
     void healthIsPublic() throws Exception {
@@ -39,8 +42,15 @@ class TranslatorResourceTest {
     }
 
     @Test
+    void openApiIsPublic() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.version").value("v1"));
+    }
+
+    @Test
     void translationRequiresAuthentication() throws Exception {
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"Hello\"}"))
                 .andExpect(status().isUnauthorized());
@@ -48,7 +58,7 @@ class TranslatorResourceTest {
 
     @Test
     void rejectsIncorrectCredentials() throws Exception {
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "wrong-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"Hello\"}"))
@@ -57,9 +67,9 @@ class TranslatorResourceTest {
 
     @Test
     void translatesValidText() throws Exception {
-        when(geminiClient.translate("How are you?")).thenReturn("كيداير؟");
+        when(translationProvider.translateToDarija("How are you?")).thenReturn("كيداير؟");
 
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"How are you?\"}"))
@@ -69,34 +79,38 @@ class TranslatorResourceTest {
 
     @Test
     void rejectsBlankText() throws Exception {
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"   \"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Text is required"));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Text is required"));
     }
 
     @Test
     void rejectsOversizedText() throws Exception {
         String body = "{\"text\":\"" + "a".repeat(5001) + "\"}";
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Text must not exceed 5000 characters"));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Text must not exceed 5000 characters"));
     }
 
     @Test
     void mapsProviderFailures() throws Exception {
-        when(geminiClient.translate(anyString())).thenThrow(new TranslationProviderException());
+        when(translationProvider.translateToDarija(anyString()))
+                .thenThrow(new TranslationUnavailableException("Provider failed"));
 
-        mockMvc.perform(post("/api/translate")
+        mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"Hello\"}"))
                 .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.error").value("Translation service unavailable"));
+                .andExpect(jsonPath("$.code").value("TRANSLATION_PROVIDER_UNAVAILABLE"))
+                .andExpect(jsonPath("$.message").value("Translation service unavailable"));
     }
 }

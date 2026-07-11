@@ -1,6 +1,6 @@
-package ma.aui.darija.api;
+package ma.aui.darija.interfaces.rest.error;
 
-import ma.aui.darija.service.TranslationProviderException;
+import ma.aui.darija.domain.exception.TranslationUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -9,24 +9,26 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class ApiExceptionMapper {
+public class RestExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    ResponseEntity<ErrorResponse> validation(MethodArgumentNotValidException exception) {
+    ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getDefaultMessage())
                 .orElse("Invalid request");
-        return ResponseEntity.badRequest().body(new ErrorResponse(message));
+        return ResponseEntity.badRequest().body(ApiError.of("VALIDATION_ERROR", message));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    ResponseEntity<ErrorResponse> malformedJson() {
-        return ResponseEntity.badRequest().body(new ErrorResponse("Invalid JSON request"));
+    ResponseEntity<ApiError> malformedJson() {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("INVALID_JSON", "Invalid JSON request"));
     }
 
-    @ExceptionHandler(TranslationProviderException.class)
-    ResponseEntity<ErrorResponse> providerFailure() {
+    @ExceptionHandler(TranslationUnavailableException.class)
+    ResponseEntity<ApiError> providerFailure(TranslationUnavailableException exception) {
+        exception.printStackTrace();
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(new ErrorResponse("Translation service unavailable"));
+                .body(ApiError.of("TRANSLATION_PROVIDER_UNAVAILABLE", "Translation service unavailable"));
     }
 }

@@ -18,5 +18,6 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuaCYW7rr7mNJJgB5WIC9UdKVzZKcacu+vE+vnju1jz3T31jux3TgrfJm7aGLwlLBkPAAmKZM/QorzPeYSNOb35bOnNL+Tva3IgKAhGRGCChPcd4fxkw72oJgOtCtzgXJc4/6J/AaN4yoHGTibxZVmH588Q2Z5FLY6jRQujf5nUJ/AOEXrvZvE3LiuxSQZYc54US9sR6WR4JbmI9cJ0nfM9/jHFwg0bCejJvZL5vw3nD3mDt8O5D6puM9p0MJzDPOoZ7QF3yAdqxbWaisrLMEPe6tKP52Qr/6opbIcd2Z6oQ7VXEhfR9FBaoWRcIpM3uxTvGfdtFNTYYTUjguA8TJKwIDAQAB"
 }

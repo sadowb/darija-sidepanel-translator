@@ -5,12 +5,7 @@ const autoTranslate = document.querySelector("#autoTranslate");
 const status = document.querySelector("#settingsStatus");
 
 async function loadSettings() {
-  const saved = await chrome.storage.local.get({
-    apiUrl: "http://localhost:8080",
-    username: "",
-    password: "",
-    autoTranslate: true
-  });
+  const saved = await SettingsStore.get();
   apiUrl.value = saved.apiUrl;
   username.value = saved.username;
   password.value = saved.password;
@@ -18,7 +13,7 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  await chrome.storage.local.set({
+  await SettingsStore.save({
     apiUrl: apiUrl.value.trim().replace(/\/$/, ""),
     username: username.value.trim(),
     password: password.value,
@@ -36,8 +31,8 @@ document.querySelector("#testButton").addEventListener("click", async () => {
   status.textContent = "Testing…";
   try {
     await saveSettings();
-    const response = await fetch(`${apiUrl.value.trim().replace(/\/$/, "")}/health`);
-    if (!response.ok) throw new Error();
+    const client = new TranslatorApi.TranslatorApiClient(await SettingsStore.get());
+    await client.health();
     status.textContent = "Connection successful.";
   } catch {
     status.textContent = "Connection failed. Check the URL and server.";
