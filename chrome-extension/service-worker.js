@@ -37,7 +37,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     password: "Black",
     llmApiKey: ""
   }, async (settings) => {
-    if (!settings.apiUrl || !settings.username || !settings.password) {
+    const url = (settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app").trim().replace(/\/$/, "");
+    const user = (settings.username || "translator").trim();
+    const pass = settings.password || "Black";
+
+    if (!url || !user || !pass) {
       chrome.tabs.sendMessage(tab.id, {
         action: "showTranslationError",
         error: "Please sign in via the extension side panel first."
@@ -46,12 +50,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
 
     try {
-      const cleanUrl = settings.apiUrl.replace(/\/$/, "");
-      const res = await fetch(`${cleanUrl}/api/v1/translations`, {
+      const res = await fetch(`${url}/api/v1/translations`, {
         method: "POST",
         credentials: "include",
         headers: {
-          "Authorization": `Basic ${btoa(settings.username + ":" + settings.password)}`,
+          "Authorization": `Basic ${btoa(user + ":" + pass)}`,
           "Content-Type": "application/json",
           "X-LLM-API-Key": settings.llmApiKey || ""
         },

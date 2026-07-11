@@ -69,7 +69,11 @@ function showTranslatorScreen() {
 // ─── Connection Check ───
 async function updateConnectionStatus() {
   const settings = await getSettings();
-  const configured = Boolean(settings.apiUrl && settings.username && settings.password);
+  const url = settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app";
+  const user = settings.username || "translator";
+  const pass = settings.password || "Black";
+
+  const configured = Boolean(url && user && pass);
 
   if (!configured) {
     showConnectionScreen(settings);
@@ -80,7 +84,7 @@ async function updateConnectionStatus() {
   if (connectionText) connectionText.textContent = "Connecting…";
 
   try {
-    const client = new TranslatorApi.TranslatorApiClient(settings);
+    const client = new TranslatorApi.TranslatorApiClient({ apiUrl: url, username: user, password: pass });
     await client.health();
     if (connectionDot) connectionDot.classList.add("connected");
     if (connectionText) connectionText.textContent = "Connected";
@@ -163,7 +167,11 @@ async function translate() {
   }
 
   const settings = await getSettings();
-  if (!settings.apiUrl || !settings.username || !settings.password) {
+  const url = settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app";
+  const user = settings.username || "translator";
+  const pass = settings.password || "Black";
+
+  if (!url || !user || !pass) {
     showError("Configure the backend connection first.");
     return;
   }
@@ -172,7 +180,7 @@ async function translate() {
   if (resultSection) resultSection.hidden = true;
 
   try {
-    const client = new TranslatorApi.TranslatorApiClient(settings);
+    const client = new TranslatorApi.TranslatorApiClient({ apiUrl: url, username: user, password: pass });
     translationResult.textContent = await client.translate(text);
     if (resultSection) resultSection.hidden = false;
   } catch (error) {
