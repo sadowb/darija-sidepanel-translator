@@ -15,7 +15,10 @@
     el.innerHTML = `
       <div class="darija-header">
         <span class="darija-title">🇲🇦 Darija</span>
-        <button class="darija-close" title="Close">✕</button>
+        <div class="darija-header-actions">
+          <button class="darija-minimize" title="Minimize">➖</button>
+          <button class="darija-close" title="Close">✕</button>
+        </div>
       </div>
       <div class="darija-body">
         <div class="darija-loading">
@@ -26,7 +29,33 @@
     `;
     document.body.appendChild(el);
 
-    el.querySelector(".darija-close").addEventListener("click", removeOverlay);
+    const closeBtn = el.querySelector(".darija-close");
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeOverlay();
+    });
+
+    const minimizeBtn = el.querySelector(".darija-minimize");
+    minimizeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      el.classList.toggle("darija-minimized");
+      if (el.classList.contains("darija-minimized")) {
+        minimizeBtn.title = "Expand";
+        minimizeBtn.textContent = "➕";
+      } else {
+        minimizeBtn.title = "Minimize";
+        minimizeBtn.textContent = "➖";
+      }
+    });
+
+    el.addEventListener("click", (e) => {
+      if (el.classList.contains("darija-minimized")) {
+        el.classList.remove("darija-minimized");
+        minimizeBtn.title = "Minimize";
+        minimizeBtn.textContent = "➖";
+      }
+    });
+
     return el;
   }
 
