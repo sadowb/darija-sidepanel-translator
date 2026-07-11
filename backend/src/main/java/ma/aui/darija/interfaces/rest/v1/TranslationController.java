@@ -25,8 +25,10 @@ public class TranslationController {
     @PostMapping
     @Operation(summary = "Translate English text to Moroccan Darija")
     @SecurityRequirement(name = "basicAuth")
-    public ResponseEntity<TranslationResponse> translate(@Valid @RequestBody TranslationRequest request) {
-        Translation translation = translateText.translate(request.text());
+    public ResponseEntity<TranslationResponse> translate(
+            @org.springframework.web.bind.annotation.RequestHeader(value = "X-LLM-API-Key", required = false) String userApiKey,
+            @Valid @RequestBody TranslationRequest request) {
+        Translation translation = translateText.translate(request.text(), userApiKey);
         return ResponseEntity.ok(new TranslationResponse(translation.translatedText()));
     }
 }

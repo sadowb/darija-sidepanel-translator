@@ -48,8 +48,9 @@ public class OpenAiTranslationProvider implements TranslationProvider {
     }
 
     @Override
-    public String translateToDarija(String sourceText) {
-        if (apiKey == null || apiKey.isBlank()) {
+    public String translateToDarija(String sourceText, String requestApiKey) {
+        String activeKey = (requestApiKey != null && !requestApiKey.isBlank()) ? requestApiKey : this.apiKey;
+        if (activeKey == null || activeKey.isBlank()) {
             throw new TranslationUnavailableException("LLM API Key is not configured.");
         }
 
@@ -67,7 +68,7 @@ public class OpenAiTranslationProvider implements TranslationProvider {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
-                    .header("Authorization", "Bearer " + apiKey.trim())
+                    .header("Authorization", "Bearer " + activeKey.trim())
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();

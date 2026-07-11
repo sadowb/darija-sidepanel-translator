@@ -23,12 +23,14 @@
     }
 
     async translate(text) {
+      const settings = await SettingsStore.get();
       const response = await fetch(`${this.apiUrl}/api/v1/translations`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Authorization": this.authorization,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-LLM-API-Key": settings.llmApiKey || ""
         },
         body: JSON.stringify({ text })
       });

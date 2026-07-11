@@ -14,8 +14,8 @@ public class TranslationService implements TranslateTextUseCase {
     }
 
     @Override
-    public Translation translate(String sourceText) {
+    public Translation translate(String sourceText, String apiKey) {
         String normalizedText = sourceText.trim();
-        return new Translation(normalizedText, translationProvider.translateToDarija(normalizedText));
+        return new Translation(normalizedText, translationProvider.translateToDarija(normalizedText, apiKey));
     }
 }

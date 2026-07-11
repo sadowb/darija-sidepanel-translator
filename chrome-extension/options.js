@@ -1,6 +1,7 @@
 const apiUrl = document.querySelector("#apiUrl");
 const username = document.querySelector("#username");
 const password = document.querySelector("#password");
+const llmApiKey = document.querySelector("#llmApiKey");
 const autoTranslate = document.querySelector("#autoTranslate");
 const status = document.querySelector("#settingsStatus");
 
@@ -9,6 +10,7 @@ async function loadSettings() {
   apiUrl.value = saved.apiUrl;
   username.value = saved.username;
   password.value = saved.password;
+  llmApiKey.value = saved.llmApiKey;
   autoTranslate.checked = saved.autoTranslate;
 }
 
@@ -17,6 +19,7 @@ async function saveSettings() {
     apiUrl: apiUrl.value.trim().replace(/\/$/, ""),
     username: username.value.trim(),
     password: password.value,
+    llmApiKey: llmApiKey.value.trim(),
     autoTranslate: autoTranslate.checked
   });
   status.textContent = "Settings saved.";

@@ -3,6 +3,7 @@
     apiUrl: "http://localhost:8081",
     username: "translator",
     password: "Black",
+    llmApiKey: "",
     autoTranslate: true
   };
 
@@ -15,6 +16,7 @@
         apiUrl: settings.apiUrl.trim().replace(/\/$/, ""),
         username: settings.username.trim(),
         password: settings.password,
+        llmApiKey: settings.llmApiKey ? settings.llmApiKey.trim() : "",
         autoTranslate: Boolean(settings.autoTranslate)
       });
     }

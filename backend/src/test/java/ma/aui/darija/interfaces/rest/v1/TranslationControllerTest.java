@@ -21,8 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest(properties = {
         "app.security.username=translator",
         "app.security.password=test-password",
-        "gemini.api-key=test-key",
-        "gemini.model=test-model"
+        "llm.api-key=test-key",
+        "llm.model=test-model"
 })
 @AutoConfigureMockMvc
 class TranslationControllerTest {
@@ -67,7 +67,7 @@ class TranslationControllerTest {
 
     @Test
     void translatesValidText() throws Exception {
-        when(translationProvider.translateToDarija("How are you?")).thenReturn("كيداير؟");
+        when(translationProvider.translateToDarija("How are you?", null)).thenReturn("كيداير؟");
 
         mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
@@ -102,7 +102,7 @@ class TranslationControllerTest {
 
     @Test
     void mapsProviderFailures() throws Exception {
-        when(translationProvider.translateToDarija(anyString()))
+        when(translationProvider.translateToDarija(anyString(), org.mockito.ArgumentMatchers.any()))
                 .thenThrow(new TranslationUnavailableException("Provider failed"));
 
         mockMvc.perform(post(TRANSLATIONS_URL)

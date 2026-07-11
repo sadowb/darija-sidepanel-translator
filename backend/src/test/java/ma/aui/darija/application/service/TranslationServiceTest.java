@@ -13,13 +13,13 @@ class TranslationServiceTest {
     @Test
     void normalizesInputAndReturnsDomainResult() {
         TranslationProvider provider = mock(TranslationProvider.class);
-        when(provider.translateToDarija("Hello")).thenReturn("سلام");
+        when(provider.translateToDarija("Hello", null)).thenReturn("سلام");
         TranslationService service = new TranslationService(provider);
 
-        Translation result = service.translate("  Hello  ");
+        Translation result = service.translate("  Hello  ", null);
 
         assertThat(result.sourceText()).isEqualTo("Hello");
         assertThat(result.translatedText()).isEqualTo("سلام");
-        verify(provider).translateToDarija("Hello");
+        verify(provider).translateToDarija("Hello", null);
     }
 }
