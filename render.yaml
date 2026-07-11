@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: darija-sidepanel-translator
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: API_USERNAME
+        value: translator
+      - key: API_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

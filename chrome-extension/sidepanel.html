@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Darija Translator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">MOROCCAN DARIJA</p>
+          <h1>English to Darija</h1>
+        </div>
+        <button id="settingsButton" class="icon-button" type="button" aria-label="Open settings">⚙</button>
+      </header>
+
+      <div class="connection-row">
+        <span id="connectionDot" class="status-dot"></span>
+        <span id="connectionText">Not configured</span>
+      </div>
+
+      <section class="field-group">
+        <div class="label-row">
+          <label for="sourceText">English</label>
+          <span id="characterCount">0 / 5000</span>
+        </div>
+        <textarea id="sourceText" maxlength="5000" placeholder="Type or select English text…"></textarea>
+      </section>
+
+      <p id="errorMessage" class="error-message" role="alert" hidden></p>
+
+      <div class="button-row">
+        <button id="translateButton" class="button primary" type="button">Translate</button>
+        <button id="clearButton" class="button secondary" type="button">Clear</button>
+      </div>
+
+      <div id="loading" class="loading" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        Translating…
+      </div>
+
+      <section id="resultSection" class="result-section" hidden>
+        <div class="label-row">
+          <span>Darija</span>
+          <span lang="ar">الدارجة</span>
+        </div>
+        <p id="translationResult" class="translation" lang="ary" dir="rtl"></p>
+        <div class="button-row compact">
+          <button id="copyButton" class="button secondary" type="button">Copy</button>
+          <button id="speakButton" class="button secondary" type="button">Read aloud</button>
+        </div>
+      </section>
+    </main>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

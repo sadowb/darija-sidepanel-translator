@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+target
+node_modules
+**/node_modules
+Chrome_Extension.pen
+*.pdf
+*.md
+chrome-extension
+mobile-client
+php-client
+python-client
