@@ -18,6 +18,9 @@ chrome.runtime.onStartup.addListener(() => setup());
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId !== MENU_ID || !info.selectionText || !tab?.id) return;
 
+  // Save selection in session storage so sidepanel fallback can read it if triggered
+  chrome.storage.session.set({ pendingSelection: info.selectionText.trim() }).catch(console.error);
+
   // 1. Tell content script to show the loading overlay immediately
   chrome.tabs.sendMessage(tab.id, {
     action: "showLoadingOverlay"
