@@ -1,6 +1,6 @@
 (function exposeSettingsStore(global) {
   const defaults = {
-    apiUrl: "http://localhost:8081",
+    apiUrl: "https://darija-sidepanel-translator-production.up.railway.app",
     username: "translator",
     password: "Black",
     llmApiKey: "",
