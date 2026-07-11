@@ -190,4 +190,11 @@ cd mobile-client
 npm install
 npm run start
 ```
-Use Expo Go on your mobile device to scan the QR code and test the app.
+Use Expo Go for the browser/web path. For native voice-to-text on iPhone or Android, build a development client first because `expo-speech-recognition` requires native permissions and config plugins:
+```bash
+cd mobile-client
+npx expo run:ios
+# or
+npx expo run:android
+```
+Then start the dev client and test the microphone flow on the device.

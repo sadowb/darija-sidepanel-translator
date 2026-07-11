@@ -4,6 +4,16 @@
     "slug": "darija-translator",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light"
+    "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Darija Translator to use the microphone.",
+          "speechRecognitionPermission": "Allow Darija Translator to use speech recognition.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
+      ]
+    ]
   }
 }

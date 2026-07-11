@@ -30,7 +30,18 @@ export class TranslationApiClient {
     private readonly baseUrl: string,
     private readonly username: string,
     private readonly password: string,
+    private readonly llmApiKey: string = "",
   ) {}
+
+  async health(): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/health`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Server health check failed.");
+    }
+  }
 
   async translate(text: string): Promise<TranslationResponse> {
     if (!this.username || !this.password) {
@@ -40,15 +51,20 @@ export class TranslationApiClient {
     const token = btoa(`${this.username}:${this.password}`);
     const response = await fetch(`${this.baseUrl}/api/v1/translations`, {
       method: "POST",
+      credentials: "include",
       headers: {
         Authorization: `Basic ${token}`,
         "Content-Type": "application/json",
+        "X-LLM-API-Key": this.llmApiKey,
       },
       body: JSON.stringify({ text }),
     });
     const payload = (await response.json()) as TranslationResponse & ApiErrorResponse;
     if (!response.ok) {
-      throw new Error(payload.message || payload.error || "Translation failed.");
+      const fallback = response.status === 401
+        ? "The username or password is incorrect."
+        : "Translation failed. Please try again.";
+      throw new Error(payload.message || payload.error || fallback);
     }
     return { translation: payload.translation };
   }
