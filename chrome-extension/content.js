@@ -18,19 +18,21 @@
         <button class="darija-close" title="Close">✕</button>
       </div>
       <div class="darija-body">
-        <div class="darija-spinner"></div>
-        <span class="darija-loading-text">Translating…</span>
+        <div class="darija-loading">
+          <div class="darija-spinner"></div>
+          <span class="darija-loading-text">Translating…</span>
+        </div>
       </div>
     `;
     document.body.appendChild(el);
 
-    // Position near selection but keep on screen
+    // Position relative to viewport (fixed positioning is robust against scroll & parents)
     const rect = el.getBoundingClientRect();
     let left = x;
-    let top = y + 10;
+    let top = y + 8;
     if (left + rect.width > window.innerWidth - 12) left = window.innerWidth - rect.width - 12;
     if (left < 12) left = 12;
-    if (top + rect.height > window.innerHeight - 12) top = y - rect.height - 10;
+    if (top + rect.height > window.innerHeight - 12) top = y - rect.height - 8;
     el.style.left = left + "px";
     el.style.top = top + "px";
 
@@ -39,15 +41,19 @@
   }
 
   function showResult(overlay, translation) {
+    if (!overlay) return;
     const body = overlay.querySelector(".darija-body");
-    body.innerHTML = `<p class="darija-result" dir="rtl" lang="ary">${escapeHtml(translation)}</p>
+    if (!body) return;
+    body.innerHTML = `
+      <p class="darija-result" dir="rtl" lang="ary">${escapeHtml(translation)}</p>
       <div class="darija-actions">
         <button class="darija-btn darija-copy">📋 Copy</button>
-        <button class="darija-btn darija-speak">🔊 Read</button>
-      </div>`;
+        <button class="darija-btn darija-speak">🔊 Read aloud</button>
+      </div>
+    `;
     body.querySelector(".darija-copy").addEventListener("click", () => {
       navigator.clipboard.writeText(translation).catch(console.error);
-      body.querySelector(".darija-copy").textContent = "✓ Copied";
+      body.querySelector(".darija-copy").textContent = "✓ Copied!";
       setTimeout(() => body.querySelector(".darija-copy").textContent = "📋 Copy", 1200);
     });
     body.querySelector(".darija-speak").addEventListener("click", () => {
@@ -59,7 +65,9 @@
   }
 
   function showError(overlay, msg) {
+    if (!overlay) return;
     const body = overlay.querySelector(".darija-body");
+    if (!body) return;
     body.innerHTML = `<p class="darija-error">${escapeHtml(msg)}</p>`;
   }
 
@@ -71,45 +79,26 @@
 
   // Listen for messages from the service worker
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.action !== "translateOverlay") return;
-
-    const sel = window.getSelection();
-    let x = 100, y = 100;
-    if (sel && sel.rangeCount > 0) {
-      const r = sel.getRangeAt(0).getBoundingClientRect();
-      x = r.left + window.scrollX;
-      y = r.bottom + window.scrollY;
+    if (msg.action === "showLoadingOverlay") {
+      const sel = window.getSelection();
+      let x = 100, y = 100;
+      if (sel && sel.rangeCount > 0) {
+        const r = sel.getRangeAt(0).getBoundingClientRect();
+        x = r.left;
+        y = r.bottom;
+      }
+      createOverlay(x, y);
+    }
+    else if (msg.action === "showTranslationResult") {
+      const overlay = document.getElementById(OVERLAY_ID);
+      showResult(overlay, msg.translation);
+    }
+    else if (msg.action === "showTranslationError") {
+      const overlay = document.getElementById(OVERLAY_ID);
+      showError(overlay, msg.error);
     }
 
-    const overlay = createOverlay(x, y);
-
-    // Fetch settings and translate
-    chrome.storage.local.get({
-      apiUrl: "https://darija-sidepanel-translator-production.up.railway.app",
-      username: "translator",
-      password: "Black",
-      llmApiKey: ""
-    }, async (settings) => {
-      try {
-        const res = await fetch(`${settings.apiUrl.replace(/\/$/, "")}/api/v1/translations`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Authorization": `Basic ${btoa(settings.username + ":" + settings.password)}`,
-            "Content-Type": "application/json",
-            "X-LLM-API-Key": settings.llmApiKey || ""
-          },
-          body: JSON.stringify({ text: msg.text })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Translation failed");
-        showResult(overlay, data.translation);
-      } catch (err) {
-        showError(overlay, err.message || "Translation failed");
-      }
-    });
-
-    sendResponse({ ok: true });
+    if (sendResponse) sendResponse({ ok: true });
   });
 
   // Close overlay on click outside

@@ -1,6 +1,6 @@
 /* ═══ Darija Overlay Bubble ═══ */
 #darija-translator-overlay {
-  position: absolute;
+  position: fixed;
   z-index: 2147483647;
   width: 280px;
   background: rgba(255, 255, 255, 0.96);
