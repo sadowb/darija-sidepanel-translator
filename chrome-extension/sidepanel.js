@@ -25,7 +25,7 @@ const disconnectButton = document.querySelector("#disconnectButton");
 function setBusy(busy) {
   if (translateButton) translateButton.disabled = busy;
   if (sourceText) sourceText.disabled = busy;
-  if (loading) loading.hidden = !busy;
+  if (loading) loading.style.display = busy ? "flex" : "none";
 }
 
 function showError(msg) {
