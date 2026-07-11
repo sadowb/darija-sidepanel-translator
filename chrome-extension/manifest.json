@@ -12,7 +12,17 @@
   "background": {
     "service_worker": "service-worker.js"
   },
+  "icons": {
+    "16": "logo.jpg",
+    "48": "logo.jpg",
+    "128": "logo.jpg"
+  },
   "action": {
+    "default_icon": {
+      "16": "logo.jpg",
+      "24": "logo.jpg",
+      "32": "logo.jpg"
+    },
     "default_title": "Open Darija Translator"
   },
   "side_panel": {
