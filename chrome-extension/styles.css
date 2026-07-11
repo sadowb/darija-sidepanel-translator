@@ -60,3 +60,19 @@ input { min-height: 42px; border: 1px solid var(--border); border-radius: 8px; p
   100% { opacity: 1; }
 }
 
+/* Onboarding On-screen Styling */
+.view-panel { display: flex; flex-direction: column; }
+.onboarding-header { text-align: center; margin-bottom: 16px; margin-top: 10px; }
+.onboarding-logo { width: 64px; height: 64px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.subtitle { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 4px 0 0; }
+.security-badge { padding: 10px 12px; border-radius: 8px; background: #f0fdf4; color: #166534; font-size: 12px; line-height: 1.5; margin-bottom: 12px; border-left: 3px solid #22c55e; text-align: left; }
+.input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.input-group label { font-size: 12px; font-weight: 700; color: var(--text); margin-top: 0; }
+.input-group input { min-height: 38px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.key-link { font-size: 11px; color: var(--accent); text-decoration: none; align-self: flex-start; margin-top: 2px; font-weight: 500; }
+.key-link:hover { text-decoration: underline; }
+.status-msg { min-height: 18px; font-size: 12px; color: var(--danger); margin: 0 0 12px; }
+.block-btn { width: 100%; min-height: 40px; margin-top: 8px; }
+#disconnectButton { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #cbd5e1; }
+#disconnectButton:hover { background: #e2e8f0; }
+

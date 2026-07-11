@@ -8,54 +8,95 @@
   </head>
   <body>
     <main class="app-shell">
-      <header class="app-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <img src="logo.jpg" alt="Logo" style="width: 44px; height: 44px; border-radius: 8px;">
-          <div>
-            <p class="eyebrow">MOROCCAN DARIJA</p>
-            <h1>English to Darija</h1>
+      
+      <!-- 1. SIGN IN / CONNECTION SCREEN -->
+      <section id="connectionScreen" class="view-panel">
+        <div class="onboarding-header">
+          <img src="logo.jpg" alt="Logo" class="onboarding-logo">
+          <h2>Darija Translator</h2>
+          <p class="subtitle">Enter your connection credentials and Groq API Key to sign in.</p>
+        </div>
+        
+        <form id="onboardingForm">
+          <div class="security-badge">
+            🔒 Credentials are stored locally in Chrome sandbox and encrypted in transit via HTTPS. Passwords are securely hashed using BCrypt.
           </div>
-        </div>
-        <button id="settingsButton" class="icon-button" type="button" aria-label="Open settings">⚙</button>
-      </header>
-
-      <div class="connection-row">
-        <span id="connectionDot" class="status-dot"></span>
-        <span id="connectionText">Not configured</span>
-      </div>
-
-      <section class="field-group">
-        <div class="label-row">
-          <label for="sourceText">English</label>
-          <span id="characterCount">0 / 5000</span>
-        </div>
-        <textarea id="sourceText" maxlength="5000" placeholder="Type or select English text…"></textarea>
+          
+          <div class="input-group">
+            <label for="onboardApiUrl">Backend URL</label>
+            <input id="onboardApiUrl" type="url" placeholder="https://..." required>
+          </div>
+          <div class="input-group">
+            <label for="onboardUsername">Username</label>
+            <input id="onboardUsername" required>
+          </div>
+          <div class="input-group">
+            <label for="onboardPassword">Password</label>
+            <input id="onboardPassword" type="password" required>
+          </div>
+          <div class="input-group">
+            <label for="onboardApiKey">Groq / LLM API Key (Optional)</label>
+            <input id="onboardApiKey" type="password" placeholder="gsk_...">
+            <a href="https://console.groq.com/" target="_blank" class="key-link">Get a free Groq key ↗</a>
+          </div>
+          
+          <p id="onboardStatus" class="status-msg"></p>
+          <button type="submit" class="button primary block-btn">Sign In & Connect</button>
+        </form>
       </section>
 
-      <p id="errorMessage" class="error-message" role="alert" hidden></p>
+      <!-- 2. TRANSLATOR SCREEN (Initially Hidden) -->
+      <section id="translatorScreen" class="view-panel" hidden>
+        <header class="app-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="logo.jpg" alt="Logo" style="width: 44px; height: 44px; border-radius: 8px;">
+            <div>
+              <p class="eyebrow">MOROCCAN DARIJA</p>
+              <h1>English to Darija</h1>
+            </div>
+          </div>
+          <button id="disconnectButton" class="icon-button" type="button" title="Disconnect Account">⚙ Disconnect</button>
+        </header>
 
-      <div class="button-row">
-        <button id="translateButton" class="button primary" type="button">Translate</button>
-        <button id="recordButton" class="button secondary" type="button" title="Translate from speech">🎤 Voice</button>
-        <button id="clearButton" class="button secondary" type="button">Clear</button>
-      </div>
-
-      <div id="loading" class="loading" hidden>
-        <span class="spinner" aria-hidden="true"></span>
-        Translating…
-      </div>
-
-      <section id="resultSection" class="result-section" hidden>
-        <div class="label-row">
-          <span>Darija</span>
-          <span lang="ar">الدارجة</span>
+        <div class="connection-row">
+          <span id="connectionDot" class="status-dot"></span>
+          <span id="connectionText">Checking connection…</span>
         </div>
-        <p id="translationResult" class="translation" lang="ary" dir="rtl"></p>
-        <div class="button-row compact">
-          <button id="copyButton" class="button secondary" type="button">Copy</button>
-          <button id="speakButton" class="button secondary" type="button">Read aloud</button>
+
+        <p id="errorMessage" class="error-message" role="alert" hidden></p>
+
+        <section class="field-group">
+          <div class="label-row">
+            <label for="sourceText">English</label>
+            <span id="characterCount">0 / 5000</span>
+          </div>
+          <textarea id="sourceText" maxlength="5000" placeholder="Type or select English text…"></textarea>
+        </section>
+
+        <div class="button-row">
+          <button id="translateButton" class="button primary" type="button">Translate</button>
+          <button id="recordButton" class="button secondary" type="button" title="Translate from speech">🎤 Voice</button>
+          <button id="clearButton" class="button secondary" type="button">Clear</button>
         </div>
+
+        <div id="loading" class="loading" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          Translating…
+        </div>
+
+        <section id="resultSection" class="result-section" hidden>
+          <div class="label-row">
+            <span>Darija</span>
+            <span lang="ar">الدارجة</span>
+          </div>
+          <p id="translationResult" class="translation" lang="ary" dir="rtl"></p>
+          <div class="button-row compact">
+            <button id="copyButton" class="button secondary" type="button">Copy</button>
+            <button id="speakButton" class="button secondary" type="button">Read aloud</button>
+          </div>
+        </section>
       </section>
+
     </main>
     <script src="shared/settings-store.js"></script>
     <script src="shared/api-client.js"></script>
