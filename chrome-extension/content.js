@@ -96,6 +96,17 @@
     return d.innerHTML;
   }
 
+  function minimizeOverlay() {
+    const el = document.getElementById(OVERLAY_ID);
+    if (!el || el.classList.contains("darija-minimized")) return;
+    el.classList.add("darija-minimized");
+    const minimizeBtn = el.querySelector(".darija-minimize");
+    if (minimizeBtn) {
+      minimizeBtn.title = "Expand";
+      minimizeBtn.textContent = "➕";
+    }
+  }
+
   // Listen for messages from the service worker
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === "showLoadingOverlay") {
@@ -113,9 +124,11 @@
     if (sendResponse) sendResponse({ ok: true });
   });
 
-  // Close overlay on click outside
+  // Minimize overlay on click outside (instead of closing)
   document.addEventListener("mousedown", (e) => {
     const overlay = document.getElementById(OVERLAY_ID);
-    if (overlay && !overlay.contains(e.target)) removeOverlay();
+    if (overlay && !overlay.contains(e.target)) {
+      minimizeOverlay();
+    }
   });
 })();
