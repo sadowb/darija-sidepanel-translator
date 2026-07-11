@@ -7,7 +7,7 @@
     if (existing) existing.remove();
   }
 
-  function createOverlay(x, y) {
+  function createOverlay() {
     removeOverlay();
 
     const el = document.createElement("div");
@@ -25,16 +25,6 @@
       </div>
     `;
     document.body.appendChild(el);
-
-    // Position relative to viewport (fixed positioning is robust against scroll & parents)
-    const rect = el.getBoundingClientRect();
-    let left = x;
-    let top = y + 8;
-    if (left + rect.width > window.innerWidth - 12) left = window.innerWidth - rect.width - 12;
-    if (left < 12) left = 12;
-    if (top + rect.height > window.innerHeight - 12) top = y - rect.height - 8;
-    el.style.left = left + "px";
-    el.style.top = top + "px";
 
     el.querySelector(".darija-close").addEventListener("click", removeOverlay);
     return el;
@@ -80,14 +70,7 @@
   // Listen for messages from the service worker
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === "showLoadingOverlay") {
-      const sel = window.getSelection();
-      let x = 100, y = 100;
-      if (sel && sel.rangeCount > 0) {
-        const r = sel.getRangeAt(0).getBoundingClientRect();
-        x = r.left;
-        y = r.bottom;
-      }
-      createOverlay(x, y);
+      createOverlay();
     }
     else if (msg.action === "showTranslationResult") {
       const overlay = document.getElementById(OVERLAY_ID);
