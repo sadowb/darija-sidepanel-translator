@@ -4,7 +4,7 @@
   "description": "Translate selected or typed English text into Moroccan Darija.",
   "version": "1.0.0",
   "minimum_chrome_version": "116",
-  "permissions": ["sidePanel", "contextMenus", "storage"],
+  "permissions": ["sidePanel", "contextMenus", "storage", "activeTab"],
   "host_permissions": [
     "http://localhost:8081/*",
     "https://darija-sidepanel-translator-production.up.railway.app/*"

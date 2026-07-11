@@ -1,6 +1,7 @@
 const MENU_ID = "translate-to-darija";
 
-async function configureExtension() {
+// Register context menu and side panel behavior
+async function setup() {
   await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
@@ -11,18 +12,21 @@ async function configureExtension() {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  configureExtension().catch(console.error);
+  setup().catch(console.error);
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
+  setup().catch(console.error);
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+// Handle context menu click: store the selected text, then open the side panel
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== MENU_ID || !info.selectionText || !tab?.id) return;
 
-  chrome.storage.session
-    .set({ pendingSelection: info.selectionText.trim() })
-    .then(() => chrome.sidePanel.open({ tabId: tab.id }))
-    .catch(console.error);
+  try {
+    await chrome.storage.session.set({ pendingSelection: info.selectionText.trim() });
+    await chrome.sidePanel.open({ tabId: tab.id });
+  } catch (err) {
+    console.error("Failed to open side panel:", err);
+  }
 });
