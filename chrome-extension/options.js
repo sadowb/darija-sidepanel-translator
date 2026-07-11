@@ -43,3 +43,28 @@ document.querySelector("#testButton").addEventListener("click", async () => {
 });
 
 loadSettings();
+
+// Request Microphone permission if queried (allows side panel to bypass Chrome restrictions)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("requestMic") === "true") {
+  if (status) {
+    status.textContent = "Requesting microphone permission...";
+    status.className = "settings-status";
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      // Permission granted! Stop the stream immediately
+      stream.getTracks().forEach(track => track.stop());
+      if (status) {
+        status.textContent = "🎤 Microphone permission granted successfully! You can now close this tab and use voice translation in the side panel.";
+        status.style.color = "var(--green)";
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      if (status) {
+        status.textContent = "Failed to obtain microphone permission: " + err.message;
+        status.style.color = "var(--red)";
+      }
+    });
+}

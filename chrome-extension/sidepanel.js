@@ -272,7 +272,12 @@ if (SpeechRecognition) {
 
   recognition.onerror = (event) => {
     console.error("Speech recognition error", event.error);
-    showError(`Voice input error: ${event.error}`);
+    if (event.error === "not-allowed") {
+      showError("Microphone permission blocked. Opening settings page to grant access...");
+      chrome.tabs.create({ url: chrome.runtime.getURL("options.html?requestMic=true") });
+    } else {
+      showError(`Voice input error: ${event.error}`);
+    }
     stopRecording();
   };
 
