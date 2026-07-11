@@ -34,8 +34,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     password: "Black",
     llmApiKey: ""
   }, async (settings) => {
+    if (!settings.apiUrl || !settings.username || !settings.password) {
+      chrome.tabs.sendMessage(tab.id, {
+        action: "showTranslationError",
+        error: "Please sign in via the extension side panel first."
+      }).catch(console.error);
+      return;
+    }
+
     try {
-      const res = await fetch(`${settings.apiUrl.replace(/\/$/, "")}/api/v1/translations`, {
+      const cleanUrl = settings.apiUrl.replace(/\/$/, "");
+      const res = await fetch(`${cleanUrl}/api/v1/translations`, {
         method: "POST",
         credentials: "include",
         headers: {
