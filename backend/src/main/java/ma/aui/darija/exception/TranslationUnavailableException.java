@@ -1,4 +1,4 @@
-package ma.aui.darija.domain.exception;
+package ma.aui.darija.exception;
 
 public class TranslationUnavailableException extends RuntimeException {
     public TranslationUnavailableException(String message) {

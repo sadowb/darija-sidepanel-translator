@@ -1,6 +1,5 @@
-package ma.aui.darija.interfaces.rest.error;
+package ma.aui.darija.exception;
 
-import ma.aui.darija.domain.exception.TranslationUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -9,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
-public class RestExceptionHandler {
+public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult().getFieldErrors().stream()
@@ -26,9 +25,10 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(TranslationUnavailableException.class)
-    ResponseEntity<ApiError> providerFailure(TranslationUnavailableException exception) {
-        exception.printStackTrace();
+    ResponseEntity<ApiError> providerFailure() {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(ApiError.of("TRANSLATION_PROVIDER_UNAVAILABLE", "Translation service unavailable"));
+                .body(ApiError.of(
+                        "TRANSLATION_PROVIDER_UNAVAILABLE",
+                        "Translation service unavailable"));
     }
 }

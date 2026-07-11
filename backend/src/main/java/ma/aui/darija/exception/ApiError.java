@@ -1,4 +1,4 @@
-package ma.aui.darija.interfaces.rest.error;
+package ma.aui.darija.exception;
 
 import java.time.Instant;
 

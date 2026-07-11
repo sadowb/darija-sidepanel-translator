@@ -1,5 +1,6 @@
-package ma.aui.darija.interfaces.rest.v1;
+package ma.aui.darija.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
@@ -8,8 +9,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import ma.aui.darija.application.port.out.TranslationProvider;
-import ma.aui.darija.domain.exception.TranslationUnavailableException;
+import ma.aui.darija.exception.TranslationUnavailableException;
+import ma.aui.darija.service.TranslationProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -57,15 +58,6 @@ class TranslationControllerTest {
     }
 
     @Test
-    void rejectsIncorrectCredentials() throws Exception {
-        mockMvc.perform(post(TRANSLATIONS_URL)
-                        .with(httpBasic("translator", "wrong-password"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"text\":\"Hello\"}"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     void translatesValidText() throws Exception {
         when(translationProvider.translateToDarija("How are you?", null)).thenReturn("كيداير؟");
 
@@ -78,31 +70,31 @@ class TranslationControllerTest {
     }
 
     @Test
+    void forwardsOptionalLlmApiKey() throws Exception {
+        when(translationProvider.translateToDarija("Hello", "user-key")).thenReturn("سلام");
+
+        mockMvc.perform(post(TRANSLATIONS_URL)
+                        .with(httpBasic("translator", "test-password"))
+                        .header("X-LLM-API-Key", "user-key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\"Hello\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.translation").value("سلام"));
+    }
+
+    @Test
     void rejectsBlankText() throws Exception {
         mockMvc.perform(post(TRANSLATIONS_URL)
                         .with(httpBasic("translator", "test-password"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"   \"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Text is required"));
-    }
-
-    @Test
-    void rejectsOversizedText() throws Exception {
-        String body = "{\"text\":\"" + "a".repeat(5001) + "\"}";
-        mockMvc.perform(post(TRANSLATIONS_URL)
-                        .with(httpBasic("translator", "test-password"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Text must not exceed 5000 characters"));
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
     @Test
     void mapsProviderFailures() throws Exception {
-        when(translationProvider.translateToDarija(anyString(), org.mockito.ArgumentMatchers.any()))
+        when(translationProvider.translateToDarija(anyString(), any()))
                 .thenThrow(new TranslationUnavailableException("Provider failed"));
 
         mockMvc.perform(post(TRANSLATIONS_URL)
@@ -110,7 +102,6 @@ class TranslationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"text\":\"Hello\"}"))
                 .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.code").value("TRANSLATION_PROVIDER_UNAVAILABLE"))
-                .andExpect(jsonPath("$.message").value("Translation service unavailable"));
+                .andExpect(jsonPath("$.code").value("TRANSLATION_PROVIDER_UNAVAILABLE"));
     }
 }

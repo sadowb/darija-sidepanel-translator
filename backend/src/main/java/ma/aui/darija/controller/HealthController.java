@@ -1,4 +1,4 @@
-package ma.aui.darija.interfaces.rest;
+package ma.aui.darija.controller;
 
 import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;

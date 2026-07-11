@@ -1,4 +1,4 @@
-package ma.aui.darija.interfaces.rest.v1.dto;
+package ma.aui.darija.dto;
 
 public record TranslationResponse(String translation) {
 }
