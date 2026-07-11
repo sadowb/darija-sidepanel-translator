@@ -13,15 +13,15 @@
     "service_worker": "service-worker.js"
   },
   "icons": {
-    "16": "logo.jpg",
-    "48": "logo.jpg",
-    "128": "logo.jpg"
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "action": {
     "default_icon": {
-      "16": "logo.jpg",
-      "24": "logo.jpg",
-      "32": "logo.jpg"
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
     },
     "default_title": "Open Darija Translator"
   },
