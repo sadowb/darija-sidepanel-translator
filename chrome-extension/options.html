@@ -8,23 +8,23 @@
   </head>
   <body class="options-body">
     <main class="settings-card">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-        <img src="logo.jpg" alt="Logo" style="width: 48px; height: 48px; border-radius: 8px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+        <img src="logo.jpg" alt="Logo" style="width: 44px; height: 44px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
         <div>
-          <p class="eyebrow">DARIJA TRANSLATOR</p>
-          <h1 style="margin: 0; font-size: 24px;">Settings</h1>
+          <p style="font-size: 10px; font-weight: 800; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; margin: 0;">Darija Translator</p>
+          <h1 style="margin: 2px 0 0; font-size: 20px; font-weight: 700; color: var(--text);">Settings</h1>
         </div>
       </div>
-      <p class="helper">Credentials are stored locally for this classroom demo. Use HTTPS for deployed backends.</p>
-      <form id="settingsForm">
+      <p class="helper">Advanced configuration. Credentials are stored locally in Chrome's sandbox.</p>
+      <form id="settingsForm" class="options-form">
         <label for="apiUrl">Backend URL</label>
         <input id="apiUrl" type="url" placeholder="https://…up.railway.app" required>
         <label for="username">Username</label>
         <input id="username" autocomplete="username" required>
         <label for="password">Password</label>
         <input id="password" type="password" autocomplete="current-password" required>
-        <label for="llmApiKey">Groq / LLM API Key (Optional)</label>
-        <input id="llmApiKey" type="password" placeholder="gsk_...">
+        <label for="llmApiKey">Groq / LLM API Key</label>
+        <input id="llmApiKey" type="password" placeholder="gsk_... (optional)">
         <label class="checkbox-row">
           <input id="autoTranslate" type="checkbox">
           Automatically translate selected text

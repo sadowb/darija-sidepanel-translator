@@ -8,95 +8,106 @@
   </head>
   <body>
     <main class="app-shell">
-      
-      <!-- 1. SIGN IN / CONNECTION SCREEN -->
-      <section id="connectionScreen" class="view-panel">
-        <div class="onboarding-header">
-          <img src="logo.jpg" alt="Logo" class="onboarding-logo">
+
+      <!-- ═══ SCREEN 1: SIGN IN ═══ -->
+      <section id="connectionScreen" class="view-panel onboarding-panel">
+
+        <div class="onboarding-brand">
+          <img src="logo.jpg" alt="Darija Translator" class="onboarding-logo">
           <h2>Darija Translator</h2>
-          <p class="subtitle">Enter your connection credentials and Groq API Key to sign in.</p>
+          <p class="tagline">Translate English to Moroccan Darija instantly. Connect your account to get started.</p>
         </div>
-        
+
         <form id="onboardingForm">
           <div class="security-badge">
-            🔒 Credentials are stored locally in Chrome sandbox and encrypted in transit via HTTPS. Passwords are securely hashed using BCrypt.
+            <span class="lock-icon">🔒</span>
+            <span>Your credentials are stored locally in Chrome's sandbox and encrypted in transit via HTTPS. Passwords are hashed with BCrypt.</span>
           </div>
-          
-          <div class="input-group">
-            <label for="onboardApiUrl">Backend URL</label>
-            <input id="onboardApiUrl" type="url" placeholder="https://..." required>
+
+          <div class="form-field">
+            <label for="onboardApiUrl">Server URL</label>
+            <input id="onboardApiUrl" type="url" placeholder="https://your-app.up.railway.app" required>
           </div>
-          <div class="input-group">
+
+          <div class="form-field">
             <label for="onboardUsername">Username</label>
-            <input id="onboardUsername" required>
+            <input id="onboardUsername" placeholder="Enter your username" required>
           </div>
-          <div class="input-group">
+
+          <div class="form-field">
             <label for="onboardPassword">Password</label>
-            <input id="onboardPassword" type="password" required>
+            <input id="onboardPassword" type="password" placeholder="Enter your password" required>
           </div>
-          <div class="input-group">
-            <label for="onboardApiKey">Groq / LLM API Key (Optional)</label>
-            <input id="onboardApiKey" type="password" placeholder="gsk_...">
-            <a href="https://console.groq.com/" target="_blank" class="key-link">Get a free Groq key ↗</a>
+
+          <div class="form-field">
+            <label for="onboardApiKey">Groq API Key</label>
+            <input id="onboardApiKey" type="password" placeholder="gsk_... (optional)">
+            <span class="field-hint">Leave empty to use the server's default key.</span>
+            <a href="https://console.groq.com/" target="_blank" class="helper-link">Get a free Groq key →</a>
           </div>
-          
+
           <p id="onboardStatus" class="status-msg"></p>
-          <button type="submit" class="button primary block-btn">Sign In & Connect</button>
+          <button type="submit" class="btn-connect">Sign In & Connect</button>
         </form>
       </section>
 
-      <!-- 2. TRANSLATOR SCREEN (Initially Hidden) -->
-      <section id="translatorScreen" class="view-panel" hidden>
-        <header class="app-header">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="logo.jpg" alt="Logo" style="width: 44px; height: 44px; border-radius: 8px;">
-            <div>
-              <p class="eyebrow">MOROCCAN DARIJA</p>
-              <h1>English to Darija</h1>
+      <!-- ═══ SCREEN 2: TRANSLATOR ═══ -->
+      <section id="translatorScreen" class="view-panel translator-panel" hidden>
+
+        <header class="translator-header">
+          <div class="brand">
+            <img src="logo.jpg" alt="Logo">
+            <div class="brand-text">
+              <p class="eyebrow">Moroccan Darija</p>
+              <h1>English → Darija</h1>
             </div>
           </div>
-          <button id="disconnectButton" class="icon-button" type="button" title="Disconnect Account">⚙ Disconnect</button>
+          <button id="disconnectButton" class="btn-disconnect" type="button" title="Sign Out">
+            Sign Out
+          </button>
         </header>
 
-        <div class="connection-row">
-          <span id="connectionDot" class="status-dot"></span>
-          <span id="connectionText">Checking connection…</span>
+        <div class="status-pill">
+          <span id="connectionDot" class="status-indicator"></span>
+          <span id="connectionText">Checking…</span>
         </div>
 
-        <p id="errorMessage" class="error-message" role="alert" hidden></p>
+        <p id="errorMessage" class="error-banner" role="alert" hidden></p>
 
-        <section class="field-group">
-          <div class="label-row">
-            <label for="sourceText">English</label>
-            <span id="characterCount">0 / 5000</span>
+        <div class="input-section">
+          <div class="section-label">
+            <span class="label-text">English</span>
+            <span id="characterCount" class="char-count">0 / 5,000</span>
           </div>
-          <textarea id="sourceText" maxlength="5000" placeholder="Type or select English text…"></textarea>
-        </section>
-
-        <div class="button-row">
-          <button id="translateButton" class="button primary" type="button">Translate</button>
-          <button id="recordButton" class="button secondary" type="button" title="Translate from speech">🎤 Voice</button>
-          <button id="clearButton" class="button secondary" type="button">Clear</button>
+          <textarea id="sourceText" class="input-textarea" maxlength="5000" placeholder="Type or paste English text here…"></textarea>
         </div>
 
-        <div id="loading" class="loading" hidden>
-          <span class="spinner" aria-hidden="true"></span>
+        <div class="action-bar">
+          <button id="translateButton" class="btn btn-primary" type="button">Translate</button>
+          <button id="recordButton" class="btn btn-secondary" type="button" title="Voice input">🎤 Voice</button>
+          <button id="clearButton" class="btn btn-secondary" type="button">Clear</button>
+        </div>
+
+        <div id="loading" class="loading-indicator" hidden>
+          <span class="loading-spinner" aria-hidden="true"></span>
           Translating…
         </div>
 
-        <section id="resultSection" class="result-section" hidden>
-          <div class="label-row">
+        <section id="resultSection" class="result-card" hidden>
+          <div class="result-header">
             <span>Darija</span>
             <span lang="ar">الدارجة</span>
           </div>
-          <p id="translationResult" class="translation" lang="ary" dir="rtl"></p>
-          <div class="button-row compact">
-            <button id="copyButton" class="button secondary" type="button">Copy</button>
-            <button id="speakButton" class="button secondary" type="button">Read aloud</button>
+          <div class="result-body">
+            <p id="translationResult" class="translation-text" lang="ary" dir="rtl"></p>
+          </div>
+          <div class="result-actions">
+            <button id="copyButton" class="btn-action" type="button">📋 Copy</button>
+            <button id="speakButton" class="btn-action" type="button">🔊 Read aloud</button>
           </div>
         </section>
-      </section>
 
+      </section>
     </main>
     <script src="shared/settings-store.js"></script>
     <script src="shared/api-client.js"></script>

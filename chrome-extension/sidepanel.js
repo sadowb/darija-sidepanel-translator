@@ -1,3 +1,4 @@
+// ─── DOM References ───
 const sourceText = document.querySelector("#sourceText");
 const characterCount = document.querySelector("#characterCount");
 const translateButton = document.querySelector("#translateButton");
@@ -9,7 +10,7 @@ const errorMessage = document.querySelector("#errorMessage");
 const connectionDot = document.querySelector("#connectionDot");
 const connectionText = document.querySelector("#connectionText");
 
-// Onboarding Elements
+// Onboarding
 const connectionScreen = document.querySelector("#connectionScreen");
 const translatorScreen = document.querySelector("#translatorScreen");
 const onboardingForm = document.querySelector("#onboardingForm");
@@ -20,15 +21,16 @@ const onboardApiKey = document.querySelector("#onboardApiKey");
 const onboardStatus = document.querySelector("#onboardStatus");
 const disconnectButton = document.querySelector("#disconnectButton");
 
+// ─── Helpers ───
 function setBusy(busy) {
   if (translateButton) translateButton.disabled = busy;
   if (sourceText) sourceText.disabled = busy;
   if (loading) loading.hidden = !busy;
 }
 
-function showError(message) {
+function showError(msg) {
   if (errorMessage) {
-    errorMessage.textContent = message;
+    errorMessage.textContent = msg;
     errorMessage.hidden = false;
   }
 }
@@ -44,43 +46,11 @@ async function getSettings() {
   return SettingsStore.get();
 }
 
-async function updateConnectionStatus() {
-  const settings = await getSettings();
-  const configured = Boolean(settings.apiUrl && settings.username && settings.password);
-  
-  if (!configured) {
-    showConnectionScreen(settings);
-    return false;
-  }
-  
-  if (connectionDot) {
-    connectionDot.className = "status-dot";
-  }
-  if (connectionText) {
-    connectionText.textContent = "Checking connection…";
-  }
-  
-  try {
-    const client = new TranslatorApi.TranslatorApiClient(settings);
-    await client.health();
-    if (connectionDot) connectionDot.classList.add("connected");
-    if (connectionText) connectionText.textContent = "Ready";
-    showTranslatorScreen();
-    return true;
-  } catch (err) {
-    if (connectionDot) connectionDot.classList.remove("connected");
-    if (connectionText) connectionText.textContent = "Connection failed";
-    showConnectionScreen(settings);
-    onboardStatus.style.color = "var(--danger)";
-    onboardStatus.textContent = "Could not connect to backend. Check URL/credentials.";
-    return false;
-  }
-}
-
+// ─── Screen Management ───
 function showConnectionScreen(settings) {
   if (connectionScreen) connectionScreen.hidden = false;
   if (translatorScreen) translatorScreen.hidden = true;
-  
+
   if (onboardApiUrl) onboardApiUrl.value = settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app";
   if (onboardUsername) onboardUsername.value = settings.username || "translator";
   if (onboardPassword) onboardPassword.value = settings.password || "Black";
@@ -90,47 +60,85 @@ function showConnectionScreen(settings) {
 function showTranslatorScreen() {
   if (connectionScreen) connectionScreen.hidden = true;
   if (translatorScreen) translatorScreen.hidden = false;
-  if (onboardStatus) onboardStatus.textContent = "";
+  if (onboardStatus) {
+    onboardStatus.textContent = "";
+    onboardStatus.className = "status-msg";
+  }
 }
 
-// Onboarding Form Submit handler
+// ─── Connection Check ───
+async function updateConnectionStatus() {
+  const settings = await getSettings();
+  const configured = Boolean(settings.apiUrl && settings.username && settings.password);
+
+  if (!configured) {
+    showConnectionScreen(settings);
+    return false;
+  }
+
+  if (connectionDot) connectionDot.className = "status-indicator";
+  if (connectionText) connectionText.textContent = "Connecting…";
+
+  try {
+    const client = new TranslatorApi.TranslatorApiClient(settings);
+    await client.health();
+    if (connectionDot) connectionDot.classList.add("connected");
+    if (connectionText) connectionText.textContent = "Connected";
+    showTranslatorScreen();
+    return true;
+  } catch {
+    if (connectionDot) connectionDot.classList.remove("connected");
+    if (connectionText) connectionText.textContent = "Offline";
+    showConnectionScreen(settings);
+    if (onboardStatus) {
+      onboardStatus.textContent = "Could not reach the server. Check the URL and credentials.";
+      onboardStatus.className = "status-msg error";
+    }
+    return false;
+  }
+}
+
+// ─── Onboarding Submit ───
 if (onboardingForm) {
   onboardingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const submitBtn = onboardingForm.querySelector(".btn-connect");
+
     if (onboardStatus) {
-      onboardStatus.style.color = "var(--text)";
       onboardStatus.textContent = "Testing connection…";
+      onboardStatus.className = "status-msg connecting";
     }
-    
+    if (submitBtn) submitBtn.disabled = true;
+
     const settings = {
-      apiUrl: onboardApiUrl.value.trim(),
+      apiUrl: onboardApiUrl.value.trim().replace(/\/$/, ""),
       username: onboardUsername.value.trim(),
       password: onboardPassword.value,
       llmApiKey: onboardApiKey.value.trim(),
       autoTranslate: true
     };
-    
+
     try {
       const client = new TranslatorApi.TranslatorApiClient(settings);
       await client.health();
-      
-      // Save settings if successful
       await SettingsStore.save(settings);
       showTranslatorScreen();
       await updateConnectionStatus();
-    } catch (err) {
+    } catch {
       if (onboardStatus) {
-        onboardStatus.style.color = "var(--danger)";
-        onboardStatus.textContent = "Connection failed. Please verify URL and credentials.";
+        onboardStatus.textContent = "Connection failed. Verify URL and credentials.";
+        onboardStatus.className = "status-msg error";
       }
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
 
-// Disconnect handler
+// ─── Disconnect ───
 if (disconnectButton) {
   disconnectButton.addEventListener("click", async () => {
-    if (confirm("Are you sure you want to sign out / disconnect?")) {
+    if (confirm("Sign out and clear your saved credentials?")) {
       await SettingsStore.save({
         apiUrl: "",
         username: "",
@@ -144,6 +152,7 @@ if (disconnectButton) {
   });
 }
 
+// ─── Translation ───
 async function translate() {
   clearError();
   const text = sourceText.value.trim();
@@ -155,45 +164,48 @@ async function translate() {
 
   const settings = await getSettings();
   if (!settings.apiUrl || !settings.username || !settings.password) {
-    showError("Configure the backend URL and credentials in Settings.");
+    showError("Configure the backend connection first.");
     return;
   }
 
   setBusy(true);
   if (resultSection) resultSection.hidden = true;
+
   try {
     const client = new TranslatorApi.TranslatorApiClient(settings);
     translationResult.textContent = await client.translate(text);
     if (resultSection) resultSection.hidden = false;
   } catch (error) {
-    showError(error.message === "Failed to fetch"
-      ? "Could not reach the server. Make sure it is running."
-      : error.message);
+    showError(
+      error.message === "Failed to fetch"
+        ? "Could not reach the server."
+        : error.message
+    );
   } finally {
     setBusy(false);
   }
 }
 
+// ─── Input Events ───
 if (sourceText) {
   sourceText.addEventListener("input", () => {
-    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    characterCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
   });
 }
 
-if (translateButton) {
-  translateButton.addEventListener("click", translate);
-}
+if (translateButton) translateButton.addEventListener("click", translate);
 
 if (clearButton) {
   clearButton.addEventListener("click", () => {
     sourceText.value = "";
-    characterCount.textContent = "0 / 5000";
+    characterCount.textContent = "0 / 5,000";
     if (resultSection) resultSection.hidden = true;
     translationResult.textContent = "";
     clearError();
   });
 }
 
+// ─── Copy & Speak ───
 const copyButton = document.querySelector("#copyButton");
 if (copyButton) {
   copyButton.addEventListener("click", async () => {
@@ -201,9 +213,8 @@ if (copyButton) {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      const originalText = copyButton.textContent;
-      copyButton.textContent = "Copied!";
-      setTimeout(() => copyButton.textContent = originalText, 1500);
+      copyButton.textContent = "✓ Copied!";
+      setTimeout(() => (copyButton.textContent = "📋 Copy"), 1500);
     } catch (err) {
       console.error(err);
     }
@@ -222,11 +233,10 @@ if (speakButton) {
   });
 }
 
+// ─── Voice / Speech Recognition ───
 window.addEventListener("unload", () => {
   speechSynthesis.cancel();
-  if (recognition) {
-    recognition.stop();
-  }
+  if (recognition) recognition.stop();
 });
 
 const recordButton = document.querySelector("#recordButton");
@@ -248,7 +258,7 @@ if (SpeechRecognition) {
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     sourceText.value = (sourceText.value + " " + transcript).trim();
-    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    characterCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
     translate().catch(console.error);
   };
 
@@ -258,13 +268,9 @@ if (SpeechRecognition) {
     stopRecording();
   };
 
-  recognition.onend = () => {
-    stopRecording();
-  };
+  recognition.onend = () => stopRecording();
 } else {
-  if (recordButton) {
-    recordButton.style.display = "none";
-  }
+  if (recordButton) recordButton.style.display = "none";
 }
 
 function stopRecording() {
@@ -279,22 +285,19 @@ if (recordButton && recognition) {
     if (recordButton.classList.contains("recording")) {
       recognition.stop();
     } else {
-      try {
-        recognition.start();
-      } catch (err) {
-        console.error(err);
-      }
+      try { recognition.start(); } catch (err) { console.error(err); }
     }
   });
 }
 
+// ─── Initialize ───
 async function initialize() {
   await updateConnectionStatus();
   const { pendingSelection } = await chrome.storage.session.get("pendingSelection");
   if (pendingSelection) {
     await chrome.storage.session.remove("pendingSelection");
     sourceText.value = pendingSelection.slice(0, 5000);
-    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    characterCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
     const { autoTranslate } = await getSettings();
     if (autoTranslate) await translate();
   }
@@ -305,7 +308,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     const newValue = changes.pendingSelection.newValue;
     chrome.storage.session.remove("pendingSelection").catch(console.error);
     sourceText.value = newValue.slice(0, 5000);
-    characterCount.textContent = `${sourceText.value.length} / 5000`;
+    characterCount.textContent = `${sourceText.value.length.toLocaleString()} / 5,000`;
     getSettings().then(async ({ autoTranslate }) => {
       if (autoTranslate) await translate();
     }).catch(console.error);
