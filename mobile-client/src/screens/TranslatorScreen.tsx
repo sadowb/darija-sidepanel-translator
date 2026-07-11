@@ -334,10 +334,13 @@ export function TranslatorScreen() {
         continuous: false,
         interimResults: false,
         requiresOnDeviceRecognition: true,
+        ...(Platform.OS === "android" ? { androidRecognitionServicePackage: "com.google.android.as" } : {}),
       });
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Could not start microphone.";
-      setError(message.includes("network") ? "Voice recognition could not reach the service. Try again with a stronger connection or install the language pack for on-device recognition." : message);
+      setError(message.includes("network")
+        ? "Voice recognition is still trying to use a service the phone cannot reach. On Android, install the English language pack and use Google on-device speech; on iPhone, enable Dictation and Speech Recognition in Settings."
+        : message);
     }
   }
 

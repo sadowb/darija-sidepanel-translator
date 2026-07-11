@@ -1,5 +1,29 @@
 const MENU_ID = "translate-to-darija";
 
+async function translateText(settings, text) {
+  const url = (settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app").trim().replace(/\/$/, "");
+  const user = (settings.username || "translator").trim();
+  const pass = settings.password || "Black";
+
+  if (!url || !user || !pass) {
+    throw new Error("Please sign in via the extension side panel first.");
+  }
+
+  const res = await fetch(`${url}/api/v1/translations`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Authorization": `Basic ${btoa(user + ":" + pass)}`,
+      "Content-Type": "application/json",
+      "X-LLM-API-Key": settings.llmApiKey || ""
+    },
+    body: JSON.stringify({ text })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || "Translation failed");
+  return data.translation;
+}
+
 function setup() {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
   chrome.contextMenus.removeAll(() => {
@@ -13,6 +37,28 @@ function setup() {
 
 chrome.runtime.onInstalled.addListener(() => setup());
 chrome.runtime.onStartup.addListener(() => setup());
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.action !== "translateText") {
+    return false;
+  }
+
+  chrome.storage.local.get({
+    apiUrl: "https://darija-sidepanel-translator-production.up.railway.app",
+    username: "translator",
+    password: "Black",
+    llmApiKey: ""
+  }, async (settings) => {
+    try {
+      const translation = await translateText(settings, (msg.text || "").trim());
+      sendResponse({ ok: true, translation });
+    } catch (err) {
+      sendResponse({ ok: false, error: err?.message || "Translation failed" });
+    }
+  });
+
+  return true;
+});
 
 // Handle context menu click by translating in background (bypasses page CSP) and sending to content script
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -37,36 +83,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     password: "Black",
     llmApiKey: ""
   }, async (settings) => {
-    const url = (settings.apiUrl || "https://darija-sidepanel-translator-production.up.railway.app").trim().replace(/\/$/, "");
-    const user = (settings.username || "translator").trim();
-    const pass = settings.password || "Black";
-
-    if (!url || !user || !pass) {
-      chrome.tabs.sendMessage(tab.id, {
-        action: "showTranslationError",
-        error: "Please sign in via the extension side panel first."
-      }).catch(console.error);
-      return;
-    }
-
     try {
-      const res = await fetch(`${url}/api/v1/translations`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Authorization": `Basic ${btoa(user + ":" + pass)}`,
-          "Content-Type": "application/json",
-          "X-LLM-API-Key": settings.llmApiKey || ""
-        },
-        body: JSON.stringify({ text: info.selectionText.trim() })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Translation failed");
+      const translation = await translateText(settings, info.selectionText.trim());
 
       // 3. Send successful translation to content script
       chrome.tabs.sendMessage(tab.id, {
         action: "showTranslationResult",
-        translation: data.translation
+        translation
       }).catch(console.error);
 
     } catch (err) {

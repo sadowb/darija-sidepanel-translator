@@ -16,6 +16,7 @@
       <div class="darija-header">
         <span class="darija-title">🇲🇦 Darija</span>
         <div class="darija-header-actions">
+          <button class="darija-voice" title="Voice command">🎤</button>
           <button class="darija-minimize" title="Minimize">➖</button>
           <button class="darija-close" title="Close">✕</button>
         </div>
@@ -30,6 +31,8 @@
     document.body.appendChild(el);
 
     const closeBtn = el.querySelector(".darija-close");
+
+    const voiceBtn = el.querySelector(".darija-voice");
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       removeOverlay();
@@ -47,6 +50,13 @@
         minimizeBtn.textContent = "➖";
       }
     });
+
+    if (voiceBtn) {
+      voiceBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await startVoiceCommand(el);
+      });
+    }
 
     el.addEventListener("click", (e) => {
       if (el.classList.contains("darija-minimized")) {
@@ -83,6 +93,18 @@
     });
   }
 
+  function setOverlayLoading(overlay, message) {
+    if (!overlay) return;
+    const body = overlay.querySelector(".darija-body");
+    if (!body) return;
+    body.innerHTML = `
+      <div class="darija-loading">
+        <div class="darija-spinner"></div>
+        <span class="darija-loading-text">${escapeHtml(message)}</span>
+      </div>
+    `;
+  }
+
   function showError(overlay, msg) {
     if (!overlay) return;
     const body = overlay.querySelector(".darija-body");
@@ -96,6 +118,95 @@
     return d.innerHTML;
   }
 
+  function getSpeechRecognitionCtor() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+
+  function translateText(text) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: "translateText", text }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message || "Could not reach the translator."));
+          return;
+        }
+
+        if (!response?.ok) {
+          reject(new Error(response?.error || "Translation failed"));
+          return;
+        }
+
+        resolve(response.translation);
+      });
+    });
+  }
+
+  let recognition = null;
+  let recordingOverlay = null;
+
+  async function startVoiceCommand(overlay) {
+    const SpeechRecognition = getSpeechRecognitionCtor();
+    if (!SpeechRecognition) {
+      showError(overlay, "Voice command is only available in Chrome or Edge.");
+      return;
+    }
+
+    if (recognition) {
+      try { recognition.stop(); } catch (err) { console.error(err); }
+    }
+
+    recordingOverlay = overlay;
+    setOverlayLoading(overlay, "Listening…");
+    const voiceBtn = overlay.querySelector(".darija-voice");
+    if (voiceBtn) {
+      voiceBtn.classList.add("recording");
+      voiceBtn.textContent = "🛑";
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    recognition.onresult = async (event) => {
+      const transcript = event.results[0][0].transcript.trim();
+      if (!transcript) {
+        showError(overlay, "Could not understand the voice input.");
+        return;
+      }
+
+      setOverlayLoading(overlay, "Translating…");
+
+      try {
+        const translation = await translateText(transcript);
+        showResult(overlay, translation);
+      } catch (error) {
+        showError(overlay, error.message || "Translation failed.");
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      if (event.error === "not-allowed") {
+        showError(overlay, "Microphone permission blocked. Enable microphone access and try again.");
+      } else if (event.error === "network") {
+        showError(overlay, "Voice input error: network. Try Chrome or Edge with a working speech service, or type the text instead.");
+      } else {
+        showError(overlay, `Voice input error: ${event.error}`);
+      }
+      stopRecording();
+    };
+
+    recognition.onend = () => stopRecording();
+
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error(err);
+      showError(overlay, "Could not start microphone: " + err.message);
+      stopRecording();
+    }
+  }
+
   function minimizeOverlay() {
     const el = document.getElementById(OVERLAY_ID);
     if (!el || el.classList.contains("darija-minimized")) return;
@@ -104,6 +215,21 @@
     if (minimizeBtn) {
       minimizeBtn.title = "Expand";
       minimizeBtn.textContent = "➕";
+    }
+  }
+
+  function stopRecording() {
+    if (recordingOverlay) {
+      const voiceBtn = recordingOverlay.querySelector(".darija-voice");
+      if (voiceBtn) {
+        voiceBtn.textContent = "🎤";
+        voiceBtn.classList.remove("recording");
+      }
+      recordingOverlay = null;
+    }
+
+    if (recognition) {
+      try { recognition.stop(); } catch (err) { console.error(err); }
     }
   }
 
@@ -119,6 +245,17 @@
     else if (msg.action === "showTranslationError") {
       const overlay = document.getElementById(OVERLAY_ID);
       showError(overlay, msg.error);
+    }
+    else if (msg.action === "showVoiceListening") {
+      const overlay = createOverlay();
+      setOverlayLoading(overlay, "Listening…");
+    }
+    else if (msg.action === "showVoiceTranslation") {
+      const overlay = document.getElementById(OVERLAY_ID) || createOverlay();
+      setOverlayLoading(overlay, "Translating…");
+      translateText(msg.text)
+        .then((translation) => showResult(overlay, translation))
+        .catch((err) => showError(overlay, err.message || "Translation failed"));
     }
 
     if (sendResponse) sendResponse({ ok: true });
